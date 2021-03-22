@@ -1,0 +1,14 @@
+html,
+body {
+  height: 100%;
+}
+#root {
+  height: 100%;
+}
+.home {
+  background-image: url("./bg.jpg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  height: 100%;
+  width: 100%;
+}
