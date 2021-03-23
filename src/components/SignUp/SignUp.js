@@ -6,12 +6,16 @@ import { Toast } from "primereact/toast";
 import { Link } from "@reach/router";
 import * as authService from "../../services/authService";
 import { showErrorMessage } from "../../utils/messages";
+import * as userService from "../../services/userService";
+import { useNavigate } from "@reach/router";
 
 function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setrepeatPassword] = useState("");
   const toast = useRef(null);
+  const navigate = useNavigate();
+
   const signUp = async (e) => {
     e.preventDefault();
     if (repeatPassword !== password) {
@@ -32,9 +36,14 @@ function SignUp() {
 
       return;
     }
-    await authService.signUp(email, password).catch((error) => {
+    try {
+      const { user } = await authService.signUp(email, password);
+      userService.createUserDocument(user);
+
+      navigate("/", { replace: true });
+    } catch (error) {
       showErrorMessage(toast, "Something went wrong", error.message);
-    });
+    }
   };
 
   return (

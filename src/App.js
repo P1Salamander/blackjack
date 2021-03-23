@@ -6,18 +6,24 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import SignIn from "./components/SignIn/SignIn";
-import UserProvider from "./providers/UserProvider";
+import UserProvider, { UserContext } from "./providers/UserProvider";
+import { useContext } from "react";
+import Game from "./components/Game/Game";
 
 function App() {
-  return (
-    <UserProvider>
-      <Router className="router">
-        <Home path="/">
-          <SignIn path="/"></SignIn>
-          <SignUp path="/signUp"></SignUp>
-        </Home>
-      </Router>
-    </UserProvider>
+  const user = useContext(UserContext);
+
+  return user ? (
+    <Router className="router">
+      <Game path="/"></Game>
+    </Router>
+  ) : (
+    <Router className="router">
+      <Home path="/">
+        <SignIn path="/"></SignIn>
+        <SignUp path="/signUp"></SignUp>
+      </Home>
+    </Router>
   );
 }
 

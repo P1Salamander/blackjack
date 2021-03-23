@@ -1,0 +1,9 @@
+.content {
+  height: 100%;
+  width: 100%;
+}
+
+.spinnerContainer {
+  margin: 0;
+  height: 200px;
+}

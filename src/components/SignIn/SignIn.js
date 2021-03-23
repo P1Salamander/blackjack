@@ -6,24 +6,37 @@ import * as authService from "../../services/authService";
 import { Toast } from "primereact/toast";
 import { Link } from "@reach/router";
 import { showErrorMessage } from "../../utils/messages";
+import * as userService from "../../services/userService";
+import { useNavigate } from "@reach/router";
 
 function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const toast = useRef(null);
+  const navigate = useNavigate();
 
   const signInWithGoogle = async (e) => {
     e.preventDefault();
-    await authService.signInWithGoogle().catch((error) => {
+    try {
+      const { user } = await authService.signInWithGoogle();
+      userService.createUserDocument(user);
+
+      navigate("/", { replace: true });
+    } catch (error) {
       showErrorMessage(toast, "Something went wrong", error.message);
-    });
+    }
   };
 
   const signIn = async (e) => {
     e.preventDefault();
-    await authService.signIn(email, password).catch((error) => {
-      showErrorMessage(toast, "Wrong Credentials", "Wrong email or password");
-    });
+    try {
+      const { user } = await authService.signIn(email, password);
+      userService.createUserDocument(user);
+
+      navigate("/", { replace: true });
+    } catch (error) {
+      showErrorMessage(toast, "Something went wrong", error.message);
+    }
   };
 
   return (
