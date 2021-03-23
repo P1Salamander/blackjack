@@ -2,32 +2,43 @@ import { InputText } from "primereact/inputtext";
 import { useState, useRef } from "react";
 import { Password } from "primereact/password";
 import { Button } from "primereact/button";
-import * as authService from "../../services/authService";
 import { Toast } from "primereact/toast";
 import { Link } from "@reach/router";
+import * as authService from "../../services/authService";
 import { showErrorMessage } from "../../utils/messages";
 
-function SignIn() {
+function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [repeatPassword, setrepeatPassword] = useState("");
   const toast = useRef(null);
-
-  const signInWithGoogle = async (e) => {
+  const signUp = async (e) => {
     e.preventDefault();
-    await authService.signInWithGoogle().catch((error) => {
+    if (repeatPassword !== password) {
+      showErrorMessage(
+        toast,
+        "Password doesnt match!",
+        "Password and Reapeat Password must be the same!"
+      );
+
+      return;
+    }
+    if (password.length < 6) {
+      showErrorMessage(
+        toast,
+        "Password too short!",
+        "Password has to be at least 6 characters!"
+      );
+
+      return;
+    }
+    await authService.signUp(email, password).catch((error) => {
       showErrorMessage(toast, "Something went wrong", error.message);
     });
   };
 
-  const signIn = async (e) => {
-    e.preventDefault();
-    await authService.signIn(email, password).catch((error) => {
-      showErrorMessage(toast, "Wrong Credentials", "Wrong email or password");
-    });
-  };
-
   return (
-    <div className="signin">
+    <div className="signup">
       <Toast ref={toast} position="top-right"></Toast>
       <div className="p-fluid">
         <div className="p-field p-py-2">
@@ -40,7 +51,6 @@ function SignIn() {
             <label htmlFor="email">Email</label>
           </span>
         </div>
-
         <div className="p-field p-py-2">
           <span className="p-float-label">
             <Password
@@ -48,38 +58,39 @@ function SignIn() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               toggleMask
-              feedback={false}
+              feedback={true}
             />
             <label htmlFor="password">Password</label>
           </span>
         </div>
-
+        <div className="p-field p-py-2">
+          <span className="p-float-label">
+            <Password
+              id="repeatPassword"
+              value={repeatPassword}
+              onChange={(e) => setrepeatPassword(e.target.value)}
+              toggleMask
+              feedback={true}
+            />
+            <label htmlFor="repeatPassword">Repeat Password</label>
+          </span>
+        </div>
         <div className="p-grid">
           <div className="p-col">
             <Button
-              label="Sign In"
-              type="submit"
+              label="Sign Up"
               className="p-button-outlined"
-              onClick={(e) => signIn(e)}
-            />
-          </div>
-          <div className="p-col">
-            <Button
-              label="Sign In With"
-              className="p-button-outlined p-button-warning"
-              onClick={(e) => signInWithGoogle(e)}
-              icon="pi pi-google"
-              iconPos="right"
+              onClick={(e) => signUp(e)}
             />
           </div>
         </div>
 
         <div className="p-field p-py-2">
-          New here? <Link to="/signUp">Create account</Link>
+          Already have an account? <Link to="/">SignIn</Link>
         </div>
       </div>
     </div>
   );
 }
 
-export default SignIn;
+export default SignUp;
