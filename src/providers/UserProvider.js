@@ -12,7 +12,7 @@ function UserProvider({ children }) {
     setLoading(true);
     const unsubscribe = firebase.auth.onAuthStateChanged((user) => {
       setLoading(false);
-      if (user.email === "v3@abv.bg") {
+      if (user.email === "v2@abv.bg") {
         firebase.auth.signOut();
       } else {
         setCurrentUser(user);
