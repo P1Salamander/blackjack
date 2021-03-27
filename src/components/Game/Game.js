@@ -2,6 +2,7 @@ import { Component } from "react";
 import "./Game.css";
 import * as gameService from "../../services/gameService";
 import { Button } from "primereact/button";
+import GameCard from "../GameCard/GameCard";
 
 //TODO card value to game value
 //TODO ace 1 or 11
@@ -55,7 +56,17 @@ class Game extends Component {
   }
   render() {
     return (
-      <div className="table p-grid p-align-center p-m-0">
+      <div className="table p-m-0">
+        <div className="p-grid p-align-start cards">
+          <div className="p-col">
+            <GameCard></GameCard>
+          </div>
+        </div>
+        <div className="p-grid p-align-end cards">
+          <div className="p-col">
+            <GameCard></GameCard>
+          </div>
+        </div>
         <Button label="deal" onClick={this.deal}></Button>
       </div>
     );
