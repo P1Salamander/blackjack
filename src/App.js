@@ -9,13 +9,14 @@ import SignIn from "./components/SignIn/SignIn";
 import UserProvider, { UserContext } from "./providers/UserProvider";
 import { useContext } from "react";
 import Game from "./components/Game/Game";
+import Main from "./components/Main/Main";
 
 function App() {
   const user = useContext(UserContext);
 
   return user ? (
     <Router className="router">
-      <Game path="/"></Game>
+      <Main path="/"></Main>
     </Router>
   ) : (
     <Router className="router">

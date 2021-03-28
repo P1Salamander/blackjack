@@ -57,17 +57,27 @@ class Game extends Component {
   render() {
     return (
       <div className="table p-m-0">
-        <div className="p-grid p-align-start cards">
-          <div className="p-col">
-            <GameCard></GameCard>
+        <div className="cards">
+          <div className="p-d-flex cards p-jc-center">
+            {this.state.dealerCards.map((card) => {
+              return (
+                <div key={Math.random()} className="p-mr-2 p-as-start p-py-5">
+                  <GameCard url={card.image} value={card.alt}></GameCard>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="p-d-flex cards p-jc-center">
+            {this.state.userCards.map((card) => {
+              return (
+                <div key={Math.random()} className="p-mr-2 p-as-end p-py-5">
+                  <GameCard url={card.image} value={card.alt}></GameCard>
+                </div>
+              );
+            })}
           </div>
         </div>
-        <div className="p-grid p-align-end cards">
-          <div className="p-col">
-            <GameCard></GameCard>
-          </div>
-        </div>
-        <Button label="deal" onClick={this.deal}></Button>
       </div>
     );
   }
