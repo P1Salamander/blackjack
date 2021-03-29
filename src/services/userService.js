@@ -29,3 +29,13 @@ export const getuserDocument = async (uid) => {
     };
   } catch (error) {}
 };
+export const updateBalance = async (user, newBalance) => {
+  const userDocumentRef = await firebase.firestore.doc(`users/${user.uid}`);
+  const userDocument = await userDocumentRef.get();
+  user.balance = newBalance;
+  const test = await userDocumentRef.set({
+    balance: newBalance,
+    email: userDocument.data().email,
+  });
+  return test;
+};

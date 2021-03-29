@@ -10,13 +10,11 @@ function UserProvider({ children }) {
   const [loading, setLoading] = useState(false);
   useEffect(() => {
     setLoading(true);
-    const unsubscribe = firebase.auth.onAuthStateChanged((user) => {
-      setLoading(false);
-      if (user.email === "v2@abv.bg") {
-        firebase.auth.signOut();
-      } else {
+    const unsubscribe = firebase.auth.onAuthStateChanged((userAuth) => {
+      userService.createUserDocument(userAuth).then((user) => {
+        setLoading(false);
         setCurrentUser(user);
-      }
+      });
     });
 
     return unsubscribe;

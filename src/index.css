@@ -4,13 +4,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-code {
-}
-
 .router {
   display: contents;
 }
 p-component {
   font-family: "Ranchers", cursive;
+}
+p {
+  color: #fff;
 }

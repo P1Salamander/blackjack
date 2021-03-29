@@ -1,86 +1,342 @@
-import { Component } from "react";
+import { useEffect, useState } from "react";
 import "./Game.css";
 import * as gameService from "../../services/gameService";
 import { Button } from "primereact/button";
 import GameCard from "../GameCard/GameCard";
+import { Chip } from "primereact/chip";
+import { Dialog } from "primereact/dialog";
 
-//TODO card value to game value
-//TODO ace 1 or 11
-//TODO draw the cards
-//TODO bet starting and bet ended
-//TODO get user and uptade user balance
-//TODO hit button , stand and doubledown
-//TODO if we have 21, WIN! / ( if we and dealer have 21 ??!?!)
+import * as userService from "../../services/userService";
 
-class Game extends Component {
-  constructor(props) {
-    super(props);
-    this.deal = this.deal.bind(this);
+export default function Game(props) {
+  const [userCards, setUserCards] = useState([]);
+  const [dealerCards, setDealerCards] = useState([]);
 
-    this.state = {
-      deckId: null,
-      dealerCards: [],
-      userCards: [],
+  const [betSubmited, setBetSubmited] = useState(false);
+  const [userIsBusted, setUserIsBusted] = useState(false);
+  const [dealerIsBusted, setDealerIsBusted] = useState(false);
+  const [dealerPlaying, setDealerPlaying] = useState(false);
+
+  const [betValue, setBetValue] = useState(10);
+  const [userCardsValue, setUserCardsValue] = useState(0);
+  const [dealerCardsValue, setDealerCardsValue] = useState(0);
+
+  const [displayResult, setDisplayResult] = useState(false);
+
+  const [deckId, setDeckId] = useState(null);
+
+  useEffect(() => {
+    getDeckId();
+
+    if (!dealerPlaying && !userIsBusted) {
+      if (userCardsValue > 21) {
+        setUserIsBusted(true);
+        setDisplayResult(true);
+      }
+
+      if (userCardsValue === 21) {
+        setDealerIsBusted(true);
+        setDisplayResult(true);
+        userService.updateBalance(
+          props.user,
+          props.user.balance + betValue * 2
+        );
+      }
+
+      return;
+    }
+
+    if (!dealerPlaying || userIsBusted || dealerIsBusted) return;
+
+    if (dealerCardsValue < 21) {
+      setTimeout(() => {
+        getCards(1).then((res) => {
+          const card = getCard(res.cards[0]);
+          dealToDealer(false, card);
+        });
+      }, 500);
+    }
+
+    if (dealerCardsValue > 21) {
+      setDealerIsBusted(true);
+      setDisplayResult(true);
+      userService.updateBalance(props.user, props.user.balance + betValue * 2);
+      return;
+    }
+
+    if (dealerCardsValue === 21 || dealerCardsValue > userCardsValue) {
+      setUserIsBusted(true);
+      setDisplayResult(true);
+      return;
+    }
+  }, [dealerCardsValue, userCardsValue]);
+
+  const getDeckId = async () => {
+    if (deckId != null) return;
+    const rawResponse = await gameService.getDeck();
+
+    const response = await rawResponse.json();
+    setDeckId(response.deck_id);
+  };
+
+  const getCards = async (numberOfCards) => {
+    const rawResponse = await gameService.getCards(deckId, numberOfCards);
+
+    const response = await rawResponse.json();
+    return response;
+  };
+
+  const getCard = (raw) => {
+    return {
+      image: raw.image,
+      alt: raw.code,
+      value: getValue(raw.value),
     };
-  }
-  componentDidMount() {
-    if (this.state.deckId == null) {
-      gameService
-        .getDeck()
-        .then((res) => res.json())
-        .then((res) => this.setState({ deckId: res.deck_id }))
-        .catch((e) => console.log(e));
-    }
-  }
-  deal() {
-    if (this.state.dealerCards.length < 2) {
-      gameService
-        .getCards(this.state.deckId, 2)
-        .then((res) => res.json())
-        .then((res) => {
-          const userCards = [];
-          const dealerCards = [];
-          for (let index = 0; index < res.cards.length; index++) {
-            if (index % 2 === 0) {
-              userCards.push(res.cards[index]);
-            } else {
-              dealerCards.push(res.cards[index]);
-            }
-          }
-          this.setState({ userCards, dealerCards }, () =>
-            console.log(this.state)
-          );
-        })
-        .catch((e) => console.log(e));
-    }
-  }
-  render() {
-    return (
-      <div className="table p-m-0">
-        <div className="cards">
-          <div className="p-d-flex cards p-jc-center">
-            {this.state.dealerCards.map((card) => {
-              return (
-                <div key={Math.random()} className="p-mr-2 p-as-start p-py-5">
-                  <GameCard url={card.image} value={card.alt}></GameCard>
-                </div>
-              );
-            })}
-          </div>
+  };
 
-          <div className="p-d-flex cards p-jc-center">
-            {this.state.userCards.map((card) => {
-              return (
-                <div key={Math.random()} className="p-mr-2 p-as-end p-py-5">
-                  <GameCard url={card.image} value={card.alt}></GameCard>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+  const submitBet = async (e) => {
+    e.preventDefault();
+    setBetSubmited(true);
+
+    userService.updateBalance(props.user, props.user.balance - betValue);
+
+    const response = await getCards(3);
+
+    response.cards.forEach((res, index) => {
+      const card = getCard(res);
+      if (index % 2 === 0) {
+        dealToUser(card);
+      } else {
+        dealToDealer(false, card);
+      }
+    });
+
+    dealToDealer(true);
+  };
+
+  const increaseBet = (e) => {
+    e.preventDefault();
+    if (betValue + 10 <= props.user.balance) {
+      setBetValue(betValue + 10);
+    }
+  };
+
+  const decreaseBet = (e) => {
+    e.preventDefault();
+    if (betValue - 10 > 0) {
+      setBetValue(betValue - 10);
+    }
+  };
+
+  const hit = async (e) => {
+    e.preventDefault();
+    const response = await getCards(1);
+    const card = getCard(response.cards[0]);
+    dealToUser(card);
+  };
+
+  const doubleDown = async (e) => {
+    e.preventDefault();
+
+    userService.updateBalance(props.user, props.user.balance - betValue);
+
+    setBetValue(betValue * 2);
+
+    const response = await getCards(1);
+    const card = getCard(response.cards[0]);
+    dealToUser(card);
+
+    stand(e);
+  };
+
+  const stand = async (e) => {
+    e.preventDefault();
+    setDealerPlaying(true);
+
+    // removing the back card
+    const newDealerCards = dealerCards[0];
+    setDealerCards([newDealerCards]);
+
+    const response = await getCards(1);
+    const card = getCard(response.cards[0]);
+    dealToDealer(false, card);
+  };
+
+  const dealToUser = async (card) => {
+    setUserCardsValue((oldCardsValue) => oldCardsValue + card.value);
+    setUserCards((oldUserCards) => [...oldUserCards, card]);
+  };
+
+  const dealToDealer = async (isBackCard, card) => {
+    if (isBackCard) {
+      const backCard = {
+        image:
+          "https://i.pinimg.com/originals/21/1a/f2/211af2dbefc71b573252ba00e2ea87ca.png",
+        value: "back",
+      };
+      setDealerCards((oldDealerCards) => [...oldDealerCards, backCard]);
+      return;
+    }
+
+    setDealerCards((oldDealerCards) => [...oldDealerCards, card]);
+
+    setDealerCardsValue((oldCardsValue) => oldCardsValue + card.value);
+  };
+
+  const getValue = (cardValue) => {
+    const value = Number(cardValue);
+    if (Number.isNaN(value)) {
+      // eslint-disable-next-line default-case
+      switch (cardValue) {
+        case "JACK":
+        case "QUEEN":
+        case "KING":
+          return 10;
+        case "ACE":
+          return 11;
+      }
+    }
+    return value;
+  };
+
+  const reset = () => {
+    setDealerPlaying(false);
+    setDealerCardsValue(0);
+    setUserCardsValue(0);
+    setDealerCards([]);
+    setUserCards([]);
+    setDealerIsBusted(false);
+    setUserIsBusted(false);
+    setBetSubmited(false);
+    setBetValue(10);
+    setDisplayResult(false);
+  };
+
+  const renderResultFooter = (name) => {
+    return (
+      <div>
+        <Button
+          label="Start New Game"
+          icon="pi pi-check"
+          onClick={() => reset()}
+          autoFocus
+        />
       </div>
     );
-  }
-}
+  };
 
-export default Game;
+  return (
+    <div className="table p-d-flex">
+      <div
+        className="p-d-flex p-jc-center p-flex-column"
+        style={{ width: "80%" }}
+      >
+        <div className="p-d-flex p-jc-center">
+          {dealerCards.map((card) => {
+            return (
+              <div key={Math.random()} className="p-mr-2 p-as-start p-py-5">
+                <GameCard url={card.image} value={card.alt}></GameCard>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="p-d-flex p-jc-center p-mt-auto">
+          {userCards.map((card) => {
+            return (
+              <div key={Math.random()} className="p-mr-2 p-as-end p-py-5">
+                <GameCard url={card.image} value={card.alt}></GameCard>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="p-d-flex" style={{ width: "20%" }}>
+        <div
+          className="p-d-flex p-flex-column p-my-4"
+          style={{ width: "100%" }}
+        >
+          <div className="p-d-flex p-jc-between" style={{ width: "100%" }}>
+            <Button
+              icon="pi pi-minus"
+              className="p-button-rounded p-button-danger"
+              disabled={betSubmited || betValue - 10 <= 0}
+              onClick={(e) => {
+                decreaseBet(e);
+              }}
+            />
+            <Chip label={`${betValue}`} />
+            <Button
+              icon="pi pi-plus"
+              className="p-button-rounded p-button-help"
+              disabled={betSubmited || betValue + 10 > props.user.balance}
+              onClick={(e) => {
+                increaseBet(e);
+              }}
+            />
+          </div>
+
+          {betSubmited ? (
+            <div className="p-d-flex p-jc-between p-my-4">
+              <Button
+                icon="pi pi-angle-up"
+                className="p-button-rounded p-button-success"
+                disabled={dealerPlaying || userIsBusted}
+                onClick={(e) => {
+                  hit(e);
+                }}
+              />
+
+              <Button
+                icon="pi pi-angle-double-up"
+                className="p-button-rounded p-button-warning"
+                disabled={dealerPlaying || userIsBusted}
+                onClick={(e) => {
+                  doubleDown(e);
+                }}
+              />
+
+              <Button
+                icon="pi pi-minus"
+                className="p-button-rounded p-button-danger"
+                disabled={dealerPlaying || userIsBusted}
+                onClick={(e) => {
+                  stand(e);
+                }}
+              />
+            </div>
+          ) : (
+            <div className="p-d-flex p-jc-center p-my-4">
+              <Button
+                icon="pi pi-check"
+                className="p-button-rounded p-button-success"
+                disabled={betSubmited}
+                onClick={(e) => {
+                  submitBet(e);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Dialog
+        header="Result"
+        visible={displayResult}
+        position={"center"}
+        onHide={() => reset()}
+        modal
+        style={{ width: "30vw" }}
+        footer={renderResultFooter}
+        draggable={true}
+        resizable={true}
+        baseZIndex={1000}
+      >
+        <p className="p-m-0">
+          {userIsBusted ? <p>Dealer Wins</p> : <p>{props.user.email} Wins</p>}
+        </p>
+      </Dialog>
+    </div>
+  );
+}

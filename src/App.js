@@ -6,9 +6,8 @@ import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
 import SignIn from "./components/SignIn/SignIn";
-import UserProvider, { UserContext } from "./providers/UserProvider";
+import { UserContext } from "./providers/UserProvider";
 import { useContext } from "react";
-import Game from "./components/Game/Game";
 import Main from "./components/Main/Main";
 
 function App() {
@@ -16,7 +15,7 @@ function App() {
 
   return user ? (
     <Router className="router">
-      <Main path="/"></Main>
+      <Main path="/" user={user}></Main>
     </Router>
   ) : (
     <Router className="router">

@@ -3,14 +3,14 @@ import Game from "../Game/Game";
 import Navigation from "../Navigation/Navigation";
 import "./Main.css";
 
-export default function Main() {
+export default function Main(props) {
   return (
-    <div className="main p-align-stretch p-grid p-dir-col">
-      <div className="p-col-2">
-        <Navigation></Navigation>
+    <div className="main p-d-flex p-flex-column">
+      <div style={{ height: "7%", width: "100%" }}>
+        <Navigation user={props.user} />
       </div>
-      <div className="p-col-10">
-        <Game></Game>
+      <div style={{ height: "100%" }}>
+        <Game user={props.user} />
       </div>
     </div>
   );
