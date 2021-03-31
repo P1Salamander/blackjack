@@ -1,0 +1,15 @@
+html,
+body {
+  height: 100%;
+}
+#root {
+  height: 100%;
+}
+.profile {
+  background: #121212;
+  height: 100%;
+  width: 100%;
+}
+.name {
+  text-align: center;
+}

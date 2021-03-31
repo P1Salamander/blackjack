@@ -69,6 +69,7 @@ export default function Game(props) {
       setDisplayResult(true);
       return;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealerCardsValue, userCardsValue]);
 
   const getDeckId = async () => {
@@ -262,6 +263,12 @@ export default function Game(props) {
               icon="pi pi-minus"
               className="p-button-rounded p-button-danger"
               disabled={betSubmited || betValue - 10 <= 0}
+              tooltip="Decrease Bet"
+              tooltipOptions={{
+                position: "bottom",
+                mouseTrack: true,
+                mouseTrackTop: 15,
+              }}
               onClick={(e) => {
                 decreaseBet(e);
               }}
@@ -271,6 +278,12 @@ export default function Game(props) {
               icon="pi pi-plus"
               className="p-button-rounded p-button-help"
               disabled={betSubmited || betValue + 10 > props.user.balance}
+              tooltip="Increase Bet"
+              tooltipOptions={{
+                position: "left",
+                mouseTrack: true,
+                mouseTrackTop: 15,
+              }}
               onClick={(e) => {
                 increaseBet(e);
               }}
@@ -283,6 +296,12 @@ export default function Game(props) {
                 icon="pi pi-angle-up"
                 className="p-button-rounded p-button-success"
                 disabled={dealerPlaying || userIsBusted}
+                tooltip="Hit"
+                tooltipOptions={{
+                  position: "bottom",
+                  mouseTrack: true,
+                  mouseTrackTop: 15,
+                }}
                 onClick={(e) => {
                   hit(e);
                 }}
@@ -291,7 +310,17 @@ export default function Game(props) {
               <Button
                 icon="pi pi-angle-double-up"
                 className="p-button-rounded p-button-warning"
-                disabled={dealerPlaying || userIsBusted}
+                disabled={
+                  dealerPlaying ||
+                  userIsBusted ||
+                  props.user.balance < betValue * 2
+                }
+                tooltip="Double Down"
+                tooltipOptions={{
+                  position: "bottom",
+                  mouseTrack: true,
+                  mouseTrackTop: 15,
+                }}
                 onClick={(e) => {
                   doubleDown(e);
                 }}
@@ -301,6 +330,12 @@ export default function Game(props) {
                 icon="pi pi-minus"
                 className="p-button-rounded p-button-danger"
                 disabled={dealerPlaying || userIsBusted}
+                tooltip="Stand"
+                tooltipOptions={{
+                  position: "left",
+                  mouseTrack: true,
+                  mouseTrackTop: 15,
+                }}
                 onClick={(e) => {
                   stand(e);
                 }}
@@ -311,7 +346,13 @@ export default function Game(props) {
               <Button
                 icon="pi pi-check"
                 className="p-button-rounded p-button-success"
-                disabled={betSubmited}
+                disabled={betSubmited || props.user.balance < betValue}
+                tooltip="Submit Bet"
+                tooltipOptions={{
+                  position: "bottom",
+                  mouseTrack: true,
+                  mouseTrackTop: 15,
+                }}
                 onClick={(e) => {
                   submitBet(e);
                 }}

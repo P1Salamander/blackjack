@@ -9,19 +9,21 @@ import SignIn from "./components/SignIn/SignIn";
 import { UserContext } from "./providers/UserProvider";
 import { useContext } from "react";
 import Main from "./components/Main/Main";
+import Profile from "./components/Profile/Profile";
 
 function App() {
   const user = useContext(UserContext);
 
   return user ? (
     <Router className="router">
-      <Main path="/" user={user}></Main>
+      <Profile path="/profile" user={user} />
+      <Main path="/" user={user} />
     </Router>
   ) : (
     <Router className="router">
       <Home path="/">
-        <SignIn path="/"></SignIn>
-        <SignUp path="/signUp"></SignUp>
+        <SignIn path="/" />
+        <SignUp path="/signUp" />
       </Home>
     </Router>
   );
