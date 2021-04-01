@@ -11,7 +11,7 @@ import * as userService from "../../services/userService";
 export default function Game(props) {
   const [userCards, setUserCards] = useState([]);
   const [dealerCards, setDealerCards] = useState([]);
-
+  const [balance, setBalance] = useState(props.user.balance);
   const [betSubmited, setBetSubmited] = useState(false);
   const [userIsBusted, setUserIsBusted] = useState(false);
   const [dealerIsBusted, setDealerIsBusted] = useState(false);
@@ -37,10 +37,7 @@ export default function Game(props) {
       if (userCardsValue === 21) {
         setDealerIsBusted(true);
         setDisplayResult(true);
-        userService.updateBalance(
-          props.user,
-          props.user.balance + betValue * 2
-        );
+        userService.updateBalance(props.user, balance + betValue * 2);
       }
 
       return;
@@ -60,7 +57,9 @@ export default function Game(props) {
     if (dealerCardsValue > 21) {
       setDealerIsBusted(true);
       setDisplayResult(true);
-      userService.updateBalance(props.user, props.user.balance + betValue * 2);
+      const newBalance = balance + betValue * 2;
+      userService.updateBalance(props.user, newBalance);
+      setBalance(newBalance);
       return;
     }
 
@@ -98,8 +97,9 @@ export default function Game(props) {
   const submitBet = async (e) => {
     e.preventDefault();
     setBetSubmited(true);
-
-    userService.updateBalance(props.user, props.user.balance - betValue);
+    const newBalance = balance - betValue;
+    userService.updateBalance(props.user, newBalance);
+    setBalance(newBalance);
 
     const response = await getCards(3);
 
@@ -117,7 +117,7 @@ export default function Game(props) {
 
   const increaseBet = (e) => {
     e.preventDefault();
-    if (betValue + 10 <= props.user.balance) {
+    if (betValue + 10 <= balance) {
       setBetValue(betValue + 10);
     }
   };
@@ -138,9 +138,9 @@ export default function Game(props) {
 
   const doubleDown = async (e) => {
     e.preventDefault();
-
-    userService.updateBalance(props.user, props.user.balance - betValue);
-
+    const newBalance = balance - betValue;
+    userService.updateBalance(props.user, newBalance);
+    setBalance(newBalance);
     setBetValue(betValue * 2);
 
     const response = await getCards(1);
@@ -277,7 +277,7 @@ export default function Game(props) {
             <Button
               icon="pi pi-plus"
               className="p-button-rounded p-button-help"
-              disabled={betSubmited || betValue + 10 > props.user.balance}
+              disabled={betSubmited || betValue + 10 > balance}
               tooltip="Increase Bet"
               tooltipOptions={{
                 position: "left",
@@ -311,9 +311,7 @@ export default function Game(props) {
                 icon="pi pi-angle-double-up"
                 className="p-button-rounded p-button-warning"
                 disabled={
-                  dealerPlaying ||
-                  userIsBusted ||
-                  props.user.balance < betValue * 2
+                  dealerPlaying || userIsBusted || balance < betValue * 2
                 }
                 tooltip="Double Down"
                 tooltipOptions={{
@@ -346,7 +344,7 @@ export default function Game(props) {
               <Button
                 icon="pi pi-check"
                 className="p-button-rounded p-button-success"
-                disabled={betSubmited || props.user.balance < betValue}
+                disabled={betSubmited || balance < betValue}
                 tooltip="Submit Bet"
                 tooltipOptions={{
                   position: "bottom",
