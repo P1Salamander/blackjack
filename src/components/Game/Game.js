@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./Game.css";
 import * as gameService from "../../services/gameService";
 import { Button } from "primereact/button";
@@ -8,10 +8,18 @@ import { Dialog } from "primereact/dialog";
 
 import * as userService from "../../services/userService";
 
+//TODO card value to game value
+//TODO ace 1 or 11
+//TODO draw the cards
+//TODO bet starting and bet ended
+//TODO get user and uptade user balances
+//TODO hit button , stand and doubledown
+//TODO if we have 21, WIN! / ( if we and dealer have 21 ??!?!)
+
 export default function Game(props) {
   const [userCards, setUserCards] = useState([]);
   const [dealerCards, setDealerCards] = useState([]);
-  const [balance, setBalance] = useState(props.user.balance);
+
   const [betSubmited, setBetSubmited] = useState(false);
   const [userIsBusted, setUserIsBusted] = useState(false);
   const [dealerIsBusted, setDealerIsBusted] = useState(false);
@@ -37,7 +45,10 @@ export default function Game(props) {
       if (userCardsValue === 21) {
         setDealerIsBusted(true);
         setDisplayResult(true);
-        userService.updateBalance(props.user, balance + betValue * 2);
+        userService.updateBalance(
+          props.user,
+          props.user.balance + betValue * 2
+        );
       }
 
       return;
@@ -46,20 +57,16 @@ export default function Game(props) {
     if (!dealerPlaying || userIsBusted || dealerIsBusted) return;
 
     if (dealerCardsValue < 21) {
-      setTimeout(() => {
-        getCards(1).then((res) => {
-          const card = getCard(res.cards[0]);
-          dealToDealer(false, card);
-        });
-      }, 500);
+      getCards(1).then((res) => {
+        const card = getCard(res.cards[0]);
+        dealToDealer(false, card);
+      });
     }
 
     if (dealerCardsValue > 21) {
       setDealerIsBusted(true);
       setDisplayResult(true);
-      const newBalance = balance + betValue * 2;
-      userService.updateBalance(props.user, newBalance);
-      setBalance(newBalance);
+      userService.updateBalance(props.user, props.user.balance + betValue * 2);
       return;
     }
 
@@ -68,7 +75,6 @@ export default function Game(props) {
       setDisplayResult(true);
       return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dealerCardsValue, userCardsValue]);
 
   const getDeckId = async () => {
@@ -97,9 +103,8 @@ export default function Game(props) {
   const submitBet = async (e) => {
     e.preventDefault();
     setBetSubmited(true);
-    const newBalance = balance - betValue;
-    userService.updateBalance(props.user, newBalance);
-    setBalance(newBalance);
+
+    userService.updateBalance(props.user, props.user.balance - betValue);
 
     const response = await getCards(3);
 
@@ -117,7 +122,7 @@ export default function Game(props) {
 
   const increaseBet = (e) => {
     e.preventDefault();
-    if (betValue + 10 <= balance) {
+    if (betValue + 10 <= props.user.balance) {
       setBetValue(betValue + 10);
     }
   };
@@ -138,9 +143,9 @@ export default function Game(props) {
 
   const doubleDown = async (e) => {
     e.preventDefault();
-    const newBalance = balance - betValue;
-    userService.updateBalance(props.user, newBalance);
-    setBalance(newBalance);
+
+    userService.updateBalance(props.user, props.user.balance - betValue);
+
     setBetValue(betValue * 2);
 
     const response = await getCards(1);
@@ -263,12 +268,6 @@ export default function Game(props) {
               icon="pi pi-minus"
               className="p-button-rounded p-button-danger"
               disabled={betSubmited || betValue - 10 <= 0}
-              tooltip="Decrease Bet"
-              tooltipOptions={{
-                position: "bottom",
-                mouseTrack: true,
-                mouseTrackTop: 15,
-              }}
               onClick={(e) => {
                 decreaseBet(e);
               }}
@@ -277,13 +276,7 @@ export default function Game(props) {
             <Button
               icon="pi pi-plus"
               className="p-button-rounded p-button-help"
-              disabled={betSubmited || betValue + 10 > balance}
-              tooltip="Increase Bet"
-              tooltipOptions={{
-                position: "left",
-                mouseTrack: true,
-                mouseTrackTop: 15,
-              }}
+              disabled={betSubmited || betValue + 10 > props.user.balance}
               onClick={(e) => {
                 increaseBet(e);
               }}
@@ -296,12 +289,6 @@ export default function Game(props) {
                 icon="pi pi-angle-up"
                 className="p-button-rounded p-button-success"
                 disabled={dealerPlaying || userIsBusted}
-                tooltip="Hit"
-                tooltipOptions={{
-                  position: "bottom",
-                  mouseTrack: true,
-                  mouseTrackTop: 15,
-                }}
                 onClick={(e) => {
                   hit(e);
                 }}
@@ -310,15 +297,7 @@ export default function Game(props) {
               <Button
                 icon="pi pi-angle-double-up"
                 className="p-button-rounded p-button-warning"
-                disabled={
-                  dealerPlaying || userIsBusted || balance < betValue * 2
-                }
-                tooltip="Double Down"
-                tooltipOptions={{
-                  position: "bottom",
-                  mouseTrack: true,
-                  mouseTrackTop: 15,
-                }}
+                disabled={dealerPlaying || userIsBusted}
                 onClick={(e) => {
                   doubleDown(e);
                 }}
@@ -328,12 +307,6 @@ export default function Game(props) {
                 icon="pi pi-minus"
                 className="p-button-rounded p-button-danger"
                 disabled={dealerPlaying || userIsBusted}
-                tooltip="Stand"
-                tooltipOptions={{
-                  position: "left",
-                  mouseTrack: true,
-                  mouseTrackTop: 15,
-                }}
                 onClick={(e) => {
                   stand(e);
                 }}
@@ -344,13 +317,7 @@ export default function Game(props) {
               <Button
                 icon="pi pi-check"
                 className="p-button-rounded p-button-success"
-                disabled={betSubmited || balance < betValue}
-                tooltip="Submit Bet"
-                tooltipOptions={{
-                  position: "bottom",
-                  mouseTrack: true,
-                  mouseTrackTop: 15,
-                }}
+                disabled={betSubmited}
                 onClick={(e) => {
                   submitBet(e);
                 }}
@@ -363,13 +330,13 @@ export default function Game(props) {
       <Dialog
         header="Result"
         visible={displayResult}
-        position={"center"}
+        position={"top"}
         onHide={() => reset()}
         modal
-        style={{ width: "30vw" }}
+        style={{ width: "50vw" }}
         footer={renderResultFooter}
-        draggable={true}
-        resizable={true}
+        draggable={false}
+        resizable={false}
         baseZIndex={1000}
       >
         <p className="p-m-0">

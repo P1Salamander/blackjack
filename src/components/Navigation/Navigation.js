@@ -11,7 +11,7 @@ export default function Navigation(props) {
   return (
     <div className="navigation p-d-flex p-flex-row-reverse">
       <Button label="Logout" onClick={authService.logout} />
-      <Chip label={`balance: ${props.user.balance}`} />
+      <Chip label={`balance: ${props.balance}`} />
       <Button
         label={props.user.email}
         className="p-link p-mx-2 p-button-outlined"
