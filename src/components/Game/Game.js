@@ -27,30 +27,22 @@ export default function Game(props) {
 
   useEffect(() => {
     getDeck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    if (!dealerPlaying && !userIsBusted) {
-      if (userCardsValue > 21) {
-        setUserIsBusted(true);
-        setDisplayResult(true);
-      }
+  useEffect(() => {
+    if (!dealerPlaying || userIsBusted || dealerIsBusted || !betSubmited)
+      return;
 
-      if (userCardsValue === 21) {
-        setDealerIsBusted(true);
-        setDisplayResult(true);
-        const newBalance = props.balance + betValue * 2;
-        userService.updateBalance(props.user, newBalance);
-        props.updateBalance(newBalance);
-      }
-
+    if (dealerCardsValue > userCardsValue && dealerCardsValue <= 21) {
+      setUserIsBusted(true);
+      setDisplayResult(true);
       return;
     }
 
-    if (!dealerPlaying || userIsBusted || dealerIsBusted) return;
-
     if (dealerCardsValue < 21) {
-      setTimeout(() => {
-        dealToDealer(false, getCard());
-      }, 500);
+      dealToDealer(false, getCard());
+      return;
     }
 
     if (dealerCardsValue > 21) {
@@ -62,13 +54,39 @@ export default function Game(props) {
       return;
     }
 
-    if (dealerCardsValue === 21 || dealerCardsValue > userCardsValue) {
+    if (dealerCardsValue === 21) {
       setUserIsBusted(true);
       setDisplayResult(true);
       return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dealerCardsValue, userCardsValue]);
+  }, [dealerCards]);
+
+  useEffect(() => {
+    if (userCardsValue > 21) {
+      setUserIsBusted(true);
+      setDisplayResult(true);
+    }
+
+    if (userCardsValue === 21) {
+      setDealerIsBusted(true);
+      setDisplayResult(true);
+      const newBalance = props.balance + betValue * 2;
+      userService.updateBalance(props.user, newBalance);
+      props.updateBalance(newBalance);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userCards]);
+
+  useEffect(() => {
+    if (dealerPlaying !== true) return;
+
+    // removing the back card
+    const newDealerCards = dealerCards[0];
+    setDealerCards([newDealerCards]);
+    dealToDealer(false, getCard());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealerPlaying]);
 
   const getDeck = async () => {
     if (deck.deckId != null) return;
@@ -138,12 +156,12 @@ export default function Game(props) {
   const doubleDown = async (e) => {
     e.preventDefault();
 
+    dealToUser(getCard());
+
     const newBalance = props.balance - betValue;
     userService.updateBalance(props.user, props.balance - betValue);
     props.updateBalance(newBalance);
     setBetValue(betValue * 2);
-
-    dealToUser(getCard());
 
     stand(e);
   };
@@ -151,11 +169,6 @@ export default function Game(props) {
   const stand = async (e) => {
     e.preventDefault();
     setDealerPlaying(true);
-
-    // removing the back card
-    const newDealerCards = dealerCards[0];
-    setDealerCards([newDealerCards]);
-    dealToDealer(false, getCard());
   };
 
   const dealToUser = async (card) => {
@@ -368,7 +381,15 @@ export default function Game(props) {
         baseZIndex={1000}
       >
         <p className="p-m-0">
-          {userIsBusted ? <p>Dealer Wins</p> : <p>{props.user.email} Wins</p>}
+          {userIsBusted ? (
+            <p>Dealer Wins</p>
+          ) : (
+            <p>
+              {props.user.email} Wins. <br />
+            </p>
+          )}
+          Dealer had: {dealerCardsValue} <br />
+          You had: {userCardsValue}
         </p>
       </Dialog>
     </div>
